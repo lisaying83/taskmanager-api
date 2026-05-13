@@ -1,0 +1,30 @@
+# Build outputs
+bin/
+obj/
+out/
+
+# VS/Rider artifacts
+.vs/
+.idea/
+*.user
+*.suo
+
+# Secrets — never commit
+appsettings.Production.json
+**/secrets.json
+.env
+
+# EF Core migrations (generated)
+# Remove this line after first migration is reviewed and committed
+# src/TaskManager.Infrastructure/Persistence/Migrations/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker volumes (local data)
+postgres_data/
