@@ -28,3 +28,6 @@ logs/
 
 # Docker volumes (local data)
 postgres_data/
+
+# Personal study notes
+docs/STUDY_GUIDE.md
