@@ -41,6 +41,37 @@ pipeline {
             }
         }
 
+        stage('Code Quality') {
+            steps {
+                withCredentials([
+                    string(
+                        credentialsId: 'sonar-token',
+                        variable: 'SONAR_TOKEN'
+                    )
+                ]) {
+                    bat '''
+                    if not exist .sonar-tools\\dotnet-sonarscanner.exe (
+                        dotnet tool install --tool-path .sonar-tools dotnet-sonarscanner
+                    )
+
+                    .sonar-tools\\dotnet-sonarscanner.exe begin ^
+                        /k:"lisaying83_taskmanager-api" ^
+                        /o:"lisaying83" ^
+                        /d:sonar.token="%SONAR_TOKEN%" ^
+                        /d:sonar.qualitygate.wait=true ^
+                        /d:sonar.qualitygate.timeout=300
+
+                    dotnet build TaskManager.sln ^
+                        --configuration Release ^
+                        --no-incremental
+
+                    .sonar-tools\\dotnet-sonarscanner.exe end ^
+                        /d:sonar.token="%SONAR_TOKEN%"
+                    '''
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
                 withEnv(['PATH+DOCKER=C:\\Users\\Huili Ying\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin']) {
