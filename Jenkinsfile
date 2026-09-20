@@ -40,7 +40,13 @@ pipeline {
                 '''
             }
         }
+        stage('Deploy Check') {
+            steps {
 
+                // Step 1: Deploy application
+                bat '"C:\\Users\\Huili Ying\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version'
+            }
+        }
         stage('Deploy') {
             steps {
 
