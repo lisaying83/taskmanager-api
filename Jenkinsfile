@@ -5,6 +5,9 @@ pipeline {
     environment {
         DOTNET_CLI_TELEMETRY_OPTOUT = '1'
         DOTNET_NOLOGO = '1'
+
+        IMAGE_NAME = 'taskmanager-api'
+        IMAGE_TAG = "build-${BUILD_NUMBER}"
     }
 
     stages {
@@ -97,15 +100,12 @@ pipeline {
             steps {
                 withEnv(['PATH+DOCKER=C:\\Users\\Huili Ying\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin']) {
 
-                    bat 'docker version'
-                    bat 'docker compose version'
-
-                    bat 'docker compose down'
-                    bat 'docker compose up -d --build'
-                    bat 'docker compose ps'
+                    bat 'docker compose -p taskmanager-staging down'
+                    bat 'docker compose -p taskmanager-staging up -d --build'
+                    bat 'docker compose -p taskmanager-staging ps'
 
                     powershell '''
-                    $maxAttempts = 12
+                    $maxAttempts = 5
                     $attempt = 1
 
                     while ($attempt -le $maxAttempts) {
@@ -116,22 +116,74 @@ pipeline {
                                 -TimeoutSec 5
 
                             if ($response.StatusCode -eq 200) {
-                                Write-Host "Application deployed successfully and is healthy."
+                                Write-Host "Application deployed to Stage successfully and is healthy."
                                 exit 0
                             }
                         }
                         catch {
-                            Write-Host "Waiting for application... attempt $attempt"
+                            Write-Host "Waiting for staging application... attempt $attempt"
                         }
 
                         Start-Sleep -Seconds 5
                         $attempt++
                     }
 
-                    Write-Error "Deployment health check failed."
+                    Write-Error "Staging deployment failed."
                     exit 1
                     '''
                 }
+            }
+        }
+
+        stage('Release') {
+            steps {
+
+                echo 'Promoting tested image to production...'
+
+                bat '''
+                docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:release-%BUILD_NUMBER%
+                '''
+
+                bat '''
+                set RELEASE_TAG=release-%BUILD_NUMBER%
+
+                docker compose -p taskmanager-production ^
+                -f docker-compose.prod.yml down
+
+                docker compose -p taskmanager-production ^
+                -f docker-compose.prod.yml up -d
+
+                docker compose -p taskmanager-production ^
+                -f docker-compose.prod.yml ps
+                '''
+
+                powershell '''
+                $maxAttempts = 5
+                $attempt = 1
+
+                while ($attempt -le $maxAttempts) {
+                    try {
+                        $response = Invoke-WebRequest `
+                            -Uri "http://localhost:5001/health" `
+                            -UseBasicParsing `
+                            -TimeoutSec 5
+
+                        if ($response.StatusCode -eq 200) {
+                            Write-Host "Production release is healthy."
+                            exit 0
+                        }
+                    }
+                    catch {
+                        Write-Host "Waiting for production application... attempt $attempt"
+                    }
+
+                    Start-Sleep -Seconds 5
+                    $attempt++
+                }
+
+                Write-Error "Production release failed."
+                exit 1
+                '''
             }
         }
     }
