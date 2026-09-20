@@ -86,7 +86,7 @@ pipeline {
                 .
                 '''
 
-                type 'trivy-report.txt'
+                bat 'type trivy-report.txt'
 
                 archiveArtifacts artifacts: 'trivy-report.txt',
                                 fingerprint: true
