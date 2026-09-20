@@ -4,24 +4,29 @@ services:
 
     ports:
       - "5001:8080"
+
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__Postgres=Host=db;Port=5432;Database=taskmanager;Username=postgres;Password=postgres
-      - Jwt__Secret=CHANGE_THIS_IN_PRODUCTION_minimum_32_chars_secret_key!!
+      - ConnectionStrings__Postgres=Host=db;Port=5432;Database=taskmanager;Username=postgres;Password=${POSTGRES_PASSWORD}
+      - Jwt__Secret=${JWT_SECRET}
       - Jwt__Issuer=taskmanager-api
       - Jwt__Audience=taskmanager-client
+
     depends_on:
       db:
         condition: service_healthy
 
   db:
     image: postgres:16-alpine
+
     environment:
       POSTGRES_DB: taskmanager
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s

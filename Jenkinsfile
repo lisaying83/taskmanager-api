@@ -144,18 +144,30 @@ pipeline {
                 docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:release-%BUILD_NUMBER%
                 '''
 
-                bat '''
-                set RELEASE_TAG=release-%BUILD_NUMBER%
+                withCredentials([
+                    string(
+                        credentialsId: 'prod-db-password',
+                        variable: 'POSTGRES_PASSWORD'
+                    ),
+                    string(
+                        credentialsId: 'prod-jwt-secret',
+                        variable: 'JWT_SECRET'
+                    )
+                ]) {
 
-                docker compose -p taskmanager-production ^
-                -f docker-compose.prod.yml down
+                    bat '''
+                    set RELEASE_TAG=release-%BUILD_NUMBER%
 
-                docker compose -p taskmanager-production ^
-                -f docker-compose.prod.yml up -d
+                    docker compose -p taskmanager-production ^
+                    -f docker-compose.prod.yml down
 
-                docker compose -p taskmanager-production ^
-                -f docker-compose.prod.yml ps
-                '''
+                    docker compose -p taskmanager-production ^
+                    -f docker-compose.prod.yml up -d
+
+                    docker compose -p taskmanager-production ^
+                    -f docker-compose.prod.yml ps
+                    '''
+                }
 
                 powershell '''
                 $maxAttempts = 5
