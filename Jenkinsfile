@@ -9,13 +9,6 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/lisaying83/taskmanager-api.git'
-            }
-        }
-
         stage('Build') {
             steps {
                 bat 'dotnet restore TaskManager.sln'
