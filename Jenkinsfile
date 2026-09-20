@@ -72,6 +72,27 @@ pipeline {
             }
         }
 
+        stage('Security') {
+            steps {
+
+                echo 'Running Trivy security scan...'
+
+                bat '''
+                "C:\\Trivy\\trivy.exe" fs ^
+                --scanners vuln,misconfig,secret ^
+                --severity HIGH,CRITICAL ^
+                --format table ^
+                --output trivy-report.txt ^
+                .
+                '''
+
+                type 'trivy-report.txt'
+
+                archiveArtifacts artifacts: 'trivy-report.txt',
+                                fingerprint: true
+            }
+        }
+
         stage('Deploy') {
             steps {
                 withEnv(['PATH+DOCKER=C:\\Users\\Huili Ying\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin']) {
