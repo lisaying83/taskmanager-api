@@ -40,51 +40,46 @@ pipeline {
                 '''
             }
         }
-        stage('Deploy Check') {
-            steps {
 
-                // Step 1: Deploy application
-                bat '"C:\\Users\\Huili Ying\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version'
-            }
-        }
         stage('Deploy') {
             steps {
+                withEnv(['PATH+DOCKER=C:\\Users\\Huili Ying\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin']) {
 
-                // Step 1: Deploy application
-                bat '"C:\\Users\\Huili Ying\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version'
-                bat 'docker compose version'
-                bat 'docker compose down'
-                bat 'docker compose up -d --build'
-                bat 'docker compose ps'
+                    bat 'docker version'
+                    bat 'docker compose version'
 
-                // Step 2: Verify deployment
-                powershell '''
-                $maxAttempts = 12
-                $attempt = 1
+                    bat 'docker compose down'
+                    bat 'docker compose up -d --build'
+                    bat 'docker compose ps'
 
-                while ($attempt -le $maxAttempts) {
-                    try {
-                        $response = Invoke-WebRequest `
-                            -Uri "http://localhost:5000/health" `
-                            -UseBasicParsing `
-                            -TimeoutSec 5
+                    powershell '''
+                    $maxAttempts = 12
+                    $attempt = 1
 
-                        if ($response.StatusCode -eq 200) {
-                            Write-Host "Application deployed successfully and is healthy."
-                            exit 0
+                    while ($attempt -le $maxAttempts) {
+                        try {
+                            $response = Invoke-WebRequest `
+                                -Uri "http://localhost:5000/health" `
+                                -UseBasicParsing `
+                                -TimeoutSec 5
+
+                            if ($response.StatusCode -eq 200) {
+                                Write-Host "Application deployed successfully and is healthy."
+                                exit 0
+                            }
                         }
-                    }
-                    catch {
-                        Write-Host "Waiting for application... attempt $attempt"
+                        catch {
+                            Write-Host "Waiting for application... attempt $attempt"
+                        }
+
+                        Start-Sleep -Seconds 5
+                        $attempt++
                     }
 
-                    Start-Sleep -Seconds 5
-                    $attempt++
+                    Write-Error "Deployment health check failed."
+                    exit 1
+                    '''
                 }
-
-                Write-Error "Deployment health check failed."
-                exit 1
-                '''
             }
         }
     }
