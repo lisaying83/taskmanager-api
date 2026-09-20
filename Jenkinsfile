@@ -45,7 +45,7 @@ pipeline {
             steps {
 
                 // Step 1: Deploy application
-                bat 'docker version'
+                bat '"C:\\Users\\Huili Ying\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version'
                 bat 'docker compose version'
                 bat 'docker compose down'
                 bat 'docker compose up -d --build'
