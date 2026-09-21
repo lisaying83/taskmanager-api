@@ -22,4 +22,17 @@ RUN dotnet publish "src/TaskManager.Api/TaskManager.Api.csproj" -c Release -o /a
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+# Install New Relic .NET Agent
+RUN apt-get update \
+    && apt-get install -y wget gnupg ca-certificates \
+    && wget -O- https://download.newrelic.com/NEWRELIC_APT_2DAD550E.public \
+       | gpg --import --batch --no-default-keyring \
+       --keyring /usr/share/keyrings/download.newrelic.com-newrelic.gpg \
+    && echo 'deb [signed-by=/usr/share/keyrings/download.newrelic.com-newrelic.gpg] http://apt.newrelic.com/debian/ newrelic non-free' \
+       > /etc/apt/sources.list.d/newrelic.list \
+    && apt-get update \
+    && apt-get install -y newrelic-dotnet-agent \
+    && rm -rf /var/lib/apt/lists/*
+    
 ENTRYPOINT ["dotnet", "TaskManager.Api.dll"]

@@ -152,6 +152,10 @@ pipeline {
                     string(
                         credentialsId: 'prod-jwt-secret',
                         variable: 'JWT_SECRET'
+                    ),
+                    string(
+                        credentialsId: 'newrelic-license-key',
+                        variable: 'NEW_RELIC_LICENSE_KEY'
                     )
                 ]) {
 
@@ -195,6 +199,42 @@ pipeline {
 
                 Write-Error "Production release failed."
                 exit 1
+                '''
+            }
+        }
+
+        stage('Monitoring') {
+            steps {
+
+                echo 'Verifying New Relic monitoring configuration...'
+
+                // Confirm New Relic agent exists in production container
+                bat '''
+                docker exec taskmanager-production-api-1 ^
+                sh -c "test -f /usr/local/newrelic-dotnet-agent/libNewRelicProfiler.so"
+                '''
+
+                // Generate application traffic for New Relic
+                powershell '''
+                Write-Host "Generating production traffic for New Relic..."
+
+                for ($i = 1; $i -le 10; $i++) {
+                    try {
+                        Invoke-WebRequest `
+                            -Uri "http://localhost:5001/health" `
+                            -UseBasicParsing `
+                            -TimeoutSec 5 | Out-Null
+
+                        Write-Host "Request $i successful"
+                    }
+                    catch {
+                        Write-Host "Request $i failed"
+                    }
+
+                    Start-Sleep -Seconds 2
+                }
+
+                Write-Host "New Relic monitoring traffic generated."
                 '''
             }
         }
