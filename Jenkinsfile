@@ -90,6 +90,7 @@ pipeline {
                         /o:"lisaying83" ^
                         /d:sonar.token="%SONAR_TOKEN%" ^
                         /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" ^
+                        /d:sonar.exclusions="coverage-report/**,TestResults/**,artifacts/**,.report-tools/**,.sonar-tools/**" ^
                         /d:sonar.qualitygate.wait=true ^
                         /d:sonar.qualitygate.timeout=300
 
