@@ -37,7 +37,7 @@ pipeline {
         stage('Test') {
             steps {
 
-                echo 'Running unit tests and integration tests with code coverage...'
+                echo 'Running unit tests with code coverage...'
 
                 bat '''
                 if exist TestResults rmdir /s /q TestResults
@@ -46,7 +46,7 @@ pipeline {
                 dotnet test TaskManager.sln ^
                 --configuration Release ^
                 --no-build ^
-                --collect:"XPlat Code Coverage" ^
+                --collect:"XPlat Code Coverage;Format=opencover" ^
                 --results-directory TestResults
                 '''
 
@@ -59,7 +59,7 @@ pipeline {
 
                 bat '''
                 .report-tools\\reportgenerator.exe ^
-                -reports:"TestResults\\**\\coverage.cobertura.xml" ^
+                -reports:"TestResults\\**\\coverage.opencover.xml" ^
                 -targetdir:"coverage-report" ^
                 -reporttypes:"Html;Cobertura;TextSummary"
                 '''
@@ -79,6 +79,7 @@ pipeline {
                         variable: 'SONAR_TOKEN'
                     )
                 ]) {
+
                     bat '''
                     if not exist .sonar-tools\\dotnet-sonarscanner.exe (
                         dotnet tool install --tool-path .sonar-tools dotnet-sonarscanner
@@ -88,6 +89,7 @@ pipeline {
                         /k:"lisaying83_taskmanager-api" ^
                         /o:"lisaying83" ^
                         /d:sonar.token="%SONAR_TOKEN%" ^
+                        /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" ^
                         /d:sonar.qualitygate.wait=true ^
                         /d:sonar.qualitygate.timeout=300
 
