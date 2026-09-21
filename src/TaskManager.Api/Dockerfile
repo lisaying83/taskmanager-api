@@ -25,7 +25,10 @@ COPY --from=publish /app/publish .
 
 # Install New Relic .NET Agent
 RUN apt-get update \
-    && apt-get install -y curl gnupg ca-certificates \
+    && apt-get install -y --no-install-recommends \
+       curl \
+       gnupg \
+       ca-certificates \
     && curl --fail --silent --show-error \
        --location \
        --proto '=https' \
@@ -36,7 +39,8 @@ RUN apt-get update \
     && echo 'deb [signed-by=/usr/share/keyrings/download.newrelic.com-newrelic.gpg] https://apt.newrelic.com/debian/ newrelic non-free' \
        > /etc/apt/sources.list.d/newrelic.list \
     && apt-get update \
-    && apt-get install -y newrelic-dotnet-agent \
+    && apt-get install -y --no-install-recommends \
+       newrelic-dotnet-agent \
     && rm -rf /var/lib/apt/lists/*
 
 ENTRYPOINT ["dotnet", "TaskManager.Api.dll"]
