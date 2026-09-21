@@ -36,11 +36,38 @@ pipeline {
 
         stage('Test') {
             steps {
+
+                echo 'Running unit tests and integration tests with code coverage...'
+
                 bat '''
+                if exist TestResults rmdir /s /q TestResults
+                if exist coverage-report rmdir /s /q coverage-report
+
                 dotnet test TaskManager.sln ^
                 --configuration Release ^
-                --no-build
+                --no-build ^
+                --collect:"XPlat Code Coverage" ^
+                --results-directory TestResults
                 '''
+
+                bat '''
+                if not exist .report-tools\\reportgenerator.exe (
+                    dotnet tool install dotnet-reportgenerator-globaltool ^
+                    --tool-path .report-tools
+                )
+                '''
+
+                bat '''
+                .report-tools\\reportgenerator.exe ^
+                -reports:"TestResults\\**\\coverage.cobertura.xml" ^
+                -targetdir:"coverage-report" ^
+                -reporttypes:"Html;Cobertura;TextSummary"
+                '''
+
+                bat 'type coverage-report\\Summary.txt'
+
+                archiveArtifacts artifacts: 'coverage-report/**',
+                                fingerprint: true
             }
         }
 
